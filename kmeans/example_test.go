@@ -7,17 +7,24 @@ package kmeans_test
 import (
 	"code.google.com/p/biogo.cluster"
 	"code.google.com/p/biogo.cluster/kmeans"
-	"code.google.com/p/biogo/feat"
 	"fmt"
 	"strings"
 )
 
-type Features []*feat.Feature
+type Feature struct {
+	ID    string
+	Start int
+	End   int
+}
+
+func (f *Feature) Len() int { return f.End - f.Start }
+
+type Features []*Feature
 
 func (f Features) Len() int                    { return len(f) }
 func (f Features) Values(i int) (x, y float64) { return float64(f[i].Start), float64(f[i].End) }
 
-var feats = []*feat.Feature{
+var feats = []*Feature{
 	{ID: "0", Start: 1, End: 1700},
 	{ID: "1", Start: 2, End: 1700},
 	{ID: "2", Start: 3, End: 610},
@@ -34,7 +41,7 @@ var feats = []*feat.Feature{
 // Cluster feat.Features on the basis of location where:
 //  epsilon is allowable error, and
 //  effort is number of attempts to achieve error < epsilon for any k.
-func ClusterFeatures(f []*feat.Feature, epsilon float64, effort int) cluster.Clusterer {
+func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clusterer {
 	km := kmeans.NewKmeans(Features(f))
 
 	values := km.Values()

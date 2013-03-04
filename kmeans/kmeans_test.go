@@ -5,7 +5,6 @@
 package kmeans_test
 
 import (
-	"code.google.com/p/biogo/feat"
 	check "launchpad.net/gocheck"
 	"math/rand"
 	"strings"
@@ -21,7 +20,7 @@ func (s *S) TearDownSuite(_ *check.C) { rand.Seed(1) } // Reset the seed for the
 var _ = check.Suite(&S{})
 
 var (
-	seq = []*feat.Feature{
+	seq = []*Feature{
 		{ID: "0", Start: 0, End: 100},
 		{ID: "1", Start: 100, End: 200},
 		{ID: "2", Start: 200, End: 300},
@@ -34,7 +33,7 @@ var (
 		{ID: "9", Start: 900, End: 1000},
 	}
 	tests = []struct {
-		set     []*feat.Feature
+		set     []*Feature
 		epsilon float64
 		effort  int
 
