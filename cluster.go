@@ -10,7 +10,7 @@ package cluster
 // Clusterer is the common interface implemented by clustering types.
 type Clusterer interface {
 	// Cluster the data.
-	Cluster()
+	Cluster() error
 
 	// Return a slice of slices of ints representing the indices of
 	// the original data grouped into clusters.
@@ -39,7 +39,7 @@ type RN interface {
 }
 
 // A type, typically a collection, that satisfies cluster.Interface can be clustered by an ℝ² Clusterer.
-// The Clusterer requires that the elements of the collection be enumerated by an integer index. 
+// The Clusterer requires that the elements of the collection be enumerated by an integer index.
 type Interface interface {
 	Len() int                    // Return the length of the data slice.
 	Values(i int) (x, y float64) // Return the data values for element i as float64.
@@ -74,7 +74,7 @@ type Center struct {
 func (self Center) Count() int { return self.count }
 
 // A type, typically a collection, that satisfies cluster.Interface can be clustered by an ℝⁿ Clusterer.
-// The Clusterer requires that the elements of the collection be enumerated by an integer index. 
+// The Clusterer requires that the elements of the collection be enumerated by an integer index.
 type NInterface interface {
 	Len() int                   // Return the length of the data slice.
 	Values(i int) (v []float64) // Return the data values for element i as []float64.

@@ -7,6 +7,7 @@ package kmeans
 
 import (
 	"code.google.com/p/biogo.cluster"
+	"errors"
 	"math"
 	"math/rand"
 	"unsafe"
@@ -90,7 +91,10 @@ func (km *Kmeans) nearest(v val) (c int, min float64) {
 }
 
 // Cluster the data using the standard k-means algorithm.
-func (km *Kmeans) Cluster() {
+func (km *Kmeans) Cluster() error {
+	if len(km.means) == 0 {
+		return errors.New("kmeans: no centers")
+	}
 	for i, v := range km.values {
 		n, _ := km.nearest(v.val)
 		km.values[i].cluster = n
@@ -122,6 +126,7 @@ func (km *Kmeans) Cluster() {
 			break
 		}
 	}
+	return nil
 }
 
 // Within calculates the total sum of squares for the data relative to the data mean.
