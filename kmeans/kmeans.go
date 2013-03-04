@@ -77,17 +77,19 @@ func (km *Kmeans) Seed(k int) {
 // Find the nearest center to the point v. Returns c, the index of the nearest center
 // and min, the distance from v to that center.
 func (km *Kmeans) nearest(v val) (c int, min float64) {
-	min = math.Hypot(v.x-km.means[0].x, v.y-km.means[0].y)
+	xd, yd := v.x-km.means[0].x, v.y-km.means[0].y
+	min = xd*xd + yd*yd
 
 	for i := 1; i < len(km.means); i++ {
-		d := math.Hypot(v.x-km.means[i].x, v.y-km.means[i].y)
+		xd, yd = v.x-km.means[i].x, v.y-km.means[i].y
+		d := xd*xd + yd*yd
 		if d < min {
 			min = d
 			c = i
 		}
 	}
 
-	return
+	return c, math.Sqrt(min)
 }
 
 // Cluster the data using the standard k-means algorithm.
