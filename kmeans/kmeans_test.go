@@ -5,6 +5,7 @@
 package kmeans_test
 
 import (
+	"code.google.com/p/biogo.cluster/kmeans"
 	check "launchpad.net/gocheck"
 	"math/rand"
 	"strings"
@@ -97,4 +98,30 @@ func (s *S) TestKmeans(c *check.C) {
 		c.Check(int(km.Total()), check.Equals, t.total)
 		c.Check(km.Within(), check.DeepEquals, t.within)
 	}
+}
+
+type bench [][2]float64
+
+func (b bench) Len() int                    { return len(b) }
+func (b bench) Values(i int) (x, y float64) { return float64(b[i][0]), float64(b[i][1]) }
+
+var benchData bench = func() bench {
+	b := make(bench, 0, 100000)
+	for i := 0; i < 20; i++ {
+		x, y := float64(rand.Intn(10000)), float64(rand.Intn(10000))
+		r := float64(rand.Intn(200))
+		for j := 0; j < 5000; j++ {
+			b = append(b, [2]float64{x + r*rand.NormFloat64(), y + r*rand.NormFloat64()})
+		}
+	}
+	return b
+}()
+
+func Benchmark(b *testing.B) {
+	km := kmeans.NewKmeans(benchData)
+	km.Seed(20)
+	for i := 0; i < b.N; i++ {
+		km.Cluster()
+	}
+	_ = km.Clusters()
 }
