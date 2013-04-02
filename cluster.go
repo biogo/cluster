@@ -38,8 +38,9 @@ type RN interface {
 	Values() (v []NValue)
 }
 
-// A type, typically a collection, that satisfies cluster.Interface can be clustered by an ℝ² Clusterer.
-// The Clusterer requires that the elements of the collection be enumerated by an integer index.
+// Interface is a type, typically a collection, that satisfies cluster.Interface can be clustered
+// by an ℝ² Clusterer. The Clusterer requires that the elements of the collection be enumerated by
+// an integer index.
 type Interface interface {
 	Len() int                    // Return the length of the data slice.
 	Values(i int) (x, y float64) // Return the data values for element i as float64.
