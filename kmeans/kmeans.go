@@ -85,6 +85,11 @@ func (km *Kmeans) Seed(k int) {
 	}
 }
 
+// SetCenters sets the locations of the centers.
+func (km *Kmeans) SetCenters(c []cluster.Center) {
+	km.means = *(*[]center)(unsafe.Pointer(&km.means))
+}
+
 // Find the nearest center to the point v. Returns c, the index of the nearest center
 // and min, the square of the distance from v to that center.
 func (km *Kmeans) nearest(v val) (c int, min float64) {

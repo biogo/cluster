@@ -80,6 +80,11 @@ type Center struct {
 	count int
 }
 
+// NewCenter returns a new Center with the coordinates x and y.
+func NewCenter(x, y, w float64) Center {
+	return Center{val: val{x: x, y: y}}
+}
+
 // Count returns the number of members of the Center's cluster.
 func (c Center) Count() int { return c.count }
 
@@ -114,6 +119,11 @@ func (v NValue) Cluster() int { return v.cluster }
 type NCenter struct {
 	nval
 	count int
+}
+
+// NewNCenter returns a new Center with the coordinates held in v.
+func NewNCenter(v []float64, w float64) NCenter {
+	return NCenter{nval: nval{coord: v, w: w}}
 }
 
 // Count returns the number of members of the NCenter's cluster.
