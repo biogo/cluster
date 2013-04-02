@@ -46,8 +46,14 @@ type Interface interface {
 	Values(i int) (x, y float64) // Return the data values for element i as float64.
 }
 
+// Weighter is an extension of the Interface that allows values represented by the Interface to be
+// differentially weighted.
+type Weighter interface {
+	Weight(i int) float64 // Return the weight for element i.
+}
+
 type val struct {
-	x, y float64
+	x, y, w float64
 }
 
 // X returns the x-coordinate of the point.
@@ -55,6 +61,9 @@ func (v val) X() float64 { return v.x }
 
 // Y returns the y-coordinate of the point.
 func (v val) Y() float64 { return v.y }
+
+// Weight returns the weight of the point.
+func (v val) Weight() float64 { return v.w }
 
 // A Value is the representation of a data point within the clustering object.
 type Value struct {
@@ -81,10 +90,16 @@ type NInterface interface {
 	Values(i int) (v []float64) // Return the data values for element i as []float64.
 }
 
-type nval []float64
+type nval struct {
+	coord []float64
+	w     float64
+}
 
 // V returns the ith coordinate of the point.
 func (v nval) V(i int) float64 { return v.coord[i] }
+
+// Weight returns the weight of the point.
+func (v nval) Weight() float64 { return v.w }
 
 // A Value is the representation of a data point within the clustering object.
 type NValue struct {

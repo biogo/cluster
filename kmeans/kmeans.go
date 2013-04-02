@@ -15,7 +15,7 @@ import (
 // These types mirror the definitions in cluster.
 type (
 	val struct {
-		x, y float64
+		x, y, w float64
 	}
 	value struct {
 		val
@@ -46,6 +46,15 @@ func convert(data cluster.Interface) []value {
 	for i := 0; i < data.Len(); i++ {
 		x, y := data.Values(i)
 		va[i] = value{val: val{x: x, y: y}}
+	}
+	if w, ok := data.(cluster.Weighter); ok {
+		for i := 0; i < data.Len(); i++ {
+			va[i].w = w.Weight(i)
+		}
+	} else {
+		for i := 0; i < data.Len(); i++ {
+			va[i].w = 1
+		}
 	}
 
 	return va
@@ -109,12 +118,13 @@ func (km *Kmeans) Cluster() error {
 			km.means[i] = center{}
 		}
 		for _, v := range km.values {
-			km.means[v.cluster].x += v.x
-			km.means[v.cluster].y += v.y
+			km.means[v.cluster].x += v.x * v.w
+			km.means[v.cluster].y += v.y * v.w
+			km.means[v.cluster].w += v.w
 			km.means[v.cluster].count++
 		}
 		for i := range km.means {
-			inv := 1 / float64(km.means[i].count)
+			inv := 1 / km.means[i].w
 			km.means[i].x *= inv
 			km.means[i].y *= inv
 		}
