@@ -8,7 +8,6 @@ package kmeans
 import (
 	"code.google.com/p/biogo.cluster"
 	"errors"
-	"math"
 	"math/rand"
 	"unsafe"
 )
@@ -62,7 +61,7 @@ func (km *Kmeans) Seed(k int) {
 		sum := 0.
 		for j, v := range km.values {
 			_, min := km.nearest(v.val)
-			d[j] = min * min
+			d[j] = min
 			sum += d[j]
 		}
 		target := rand.Float64() * sum
@@ -75,7 +74,7 @@ func (km *Kmeans) Seed(k int) {
 }
 
 // Find the nearest center to the point v. Returns c, the index of the nearest center
-// and min, the distance from v to that center.
+// and min, the square of the distance from v to that center.
 func (km *Kmeans) nearest(v val) (c int, min float64) {
 	xd, yd := v.x-km.means[0].x, v.y-km.means[0].y
 	min = xd*xd + yd*yd
@@ -89,7 +88,7 @@ func (km *Kmeans) nearest(v val) (c int, min float64) {
 		}
 	}
 
-	return c, math.Sqrt(min)
+	return c, min
 }
 
 // Cluster the data using the standard k-means algorithm.
