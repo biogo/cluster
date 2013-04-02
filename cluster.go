@@ -50,10 +50,10 @@ type val struct {
 }
 
 // X returns the x-coordinate of the point.
-func (self val) X() float64 { return self.x }
+func (v val) X() float64 { return v.x }
 
 // Y returns the y-coordinate of the point.
-func (self val) Y() float64 { return self.y }
+func (v val) Y() float64 { return v.y }
 
 // A Value is the representation of a data point within the clustering object.
 type Value struct {
@@ -62,7 +62,7 @@ type Value struct {
 }
 
 // Cluster returns the cluster membership of the Value.
-func (self Value) Cluster() int { return self.cluster }
+func (v Value) Cluster() int { return v.cluster }
 
 // A Center is a representation of a cluster center in ℝ².
 type Center struct {
@@ -71,7 +71,7 @@ type Center struct {
 }
 
 // Count returns the number of members of the Center's cluster.
-func (self Center) Count() int { return self.count }
+func (c Center) Count() int { return c.count }
 
 // A type, typically a collection, that satisfies cluster.Interface can be clustered by an ℝⁿ Clusterer.
 // The Clusterer requires that the elements of the collection be enumerated by an integer index.
@@ -83,7 +83,7 @@ type NInterface interface {
 type nval []float64
 
 // V returns the ith coordinate of the point.
-func (self nval) V(i int) float64 { return self[i] }
+func (v nval) V(i int) float64 { return v.coord[i] }
 
 // A Value is the representation of a data point within the clustering object.
 type NValue struct {
@@ -92,7 +92,7 @@ type NValue struct {
 }
 
 // Cluster returns the cluster membership of the NValue.
-func (self NValue) Cluster() int { return self.cluster }
+func (v NValue) Cluster() int { return v.cluster }
 
 // An NCenter is a representation of a cluster center in ℝⁿ.
 type NCenter struct {
@@ -101,4 +101,4 @@ type NCenter struct {
 }
 
 // Count returns the number of members of the NCenter's cluster.
-func (self NCenter) Count() int { return self.count }
+func (v NCenter) Count() int { return v.count }

@@ -134,7 +134,7 @@ func (km *Kmeans) Cluster() error {
 }
 
 // Within calculates the total sum of squares for the data relative to the data mean.
-func (km *Kmeans) Total() (ss float64) {
+func (km *Kmeans) Total() float64 {
 	var x, y float64
 
 	for _, v := range km.values {
@@ -145,47 +145,48 @@ func (km *Kmeans) Total() (ss float64) {
 	x *= inv
 	y *= inv
 
+	var ss float64
 	for _, v := range km.values {
 		dx, dy := x-v.x, y-v.y
 		ss += dx*dx + dy*dy
 	}
 
-	return
+	return ss
 }
 
 // Within calculates the sum of squares within each cluster.
 // Returns nil if Cluster has not been called.
-func (km *Kmeans) Within() (ss []float64) {
+func (km *Kmeans) Within() []float64 {
 	if km.means == nil {
-		return
+		return nil
 	}
-	ss = make([]float64, len(km.means))
+	ss := make([]float64, len(km.means))
 
 	for _, v := range km.values {
 		dx, dy := km.means[v.cluster].x-v.x, km.means[v.cluster].y-v.y
 		ss[v.cluster] += dx*dx + dy*dy
 	}
 
-	return
+	return ss
 }
 
 // Means returns the k-means.
-func (km *Kmeans) Means() (c []cluster.Center) {
+func (km *Kmeans) Means() []cluster.Center {
 	return *(*[]cluster.Center)(unsafe.Pointer(&km.means))
 }
 
 // Features returns a slice of the values in the Kmeans.
-func (km *Kmeans) Values() (v []cluster.Value) {
+func (km *Kmeans) Values() []cluster.Value {
 	return *(*[]cluster.Value)(unsafe.Pointer(&km.values))
 }
 
 // Clusters returns the k clusters.
 // Returns nil if Cluster has not been called.
-func (km *Kmeans) Clusters() (c [][]int) {
+func (km *Kmeans) Clusters() [][]int {
 	if km.means == nil {
-		return
+		return nil
 	}
-	c = make([][]int, len(km.means))
+	c := make([][]int, len(km.means))
 
 	for i := range c {
 		c[i] = make([]int, 0, km.means[i].count)
@@ -194,5 +195,5 @@ func (km *Kmeans) Clusters() (c [][]int) {
 		c[v.cluster] = append(c[v.cluster], i)
 	}
 
-	return
+	return c
 }
