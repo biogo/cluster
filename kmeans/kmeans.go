@@ -56,6 +56,9 @@ func (km *Kmeans) Seed(k int) {
 	km.means = make([]center, k)
 
 	km.means[0].val = km.values[rand.Intn(len(km.values))].val
+	if k == 1 {
+		return
+	}
 	d := make([]float64, len(km.values))
 	for i := 1; i < k; i++ {
 		sum := 0.
