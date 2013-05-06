@@ -185,8 +185,8 @@ func (km *Kmeans) Within() []float64 {
 	return ss
 }
 
-// Means returns the k-means.
-func (km *Kmeans) Means() []cluster.Center {
+// Centers returns the k-means.
+func (km *Kmeans) Centers() []cluster.Center {
 	return *(*[]cluster.Center)(unsafe.Pointer(&km.means))
 }
 

@@ -56,7 +56,7 @@ func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clustere
 		for attempt := 0; attempt < effort; attempt++ {
 			km.Seed(k)
 			km.Cluster()
-			centers := km.Means()
+			centers := km.Centers()
 			for i, v := range values {
 				dx, dy := centers[v.Cluster()].X()-v.X(), centers[v.Cluster()].Y()-v.Y()
 				ok := dx*dx+dy*dy < cut[i]

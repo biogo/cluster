@@ -28,7 +28,7 @@ type Clusterer interface {
 // R2 is the interrogation interface implemented by ℝ² Clusterers.
 type R2 interface {
 	// Return a slice of centers of the clusters.
-	Means() (c []Center)
+	Centers() (c []Center)
 	// Return the internal representation of the original data.
 	Values() (v []Value)
 }
@@ -36,7 +36,7 @@ type R2 interface {
 // RN is the interrogative interface implemented by ℝⁿ Clusterers.
 type RN interface {
 	// Return a slice of centers of the clusters.
-	Means() (c []NCenter)
+	Centers() (c []NCenter)
 	// Return the internal representation of the original data.
 	Values() (v []NValue)
 }
