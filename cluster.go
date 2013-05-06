@@ -25,7 +25,7 @@ type Clusterer interface {
 	Total() (ss float64)
 }
 
-// R2 is the interogation interface implemented by ℝ² Clusterers.
+// R2 is the interrogation interface implemented by ℝ² Clusterers.
 type R2 interface {
 	// Return a slice of centers of the clusters.
 	Means() (c []Center)
@@ -33,7 +33,7 @@ type R2 interface {
 	Values() (v []Value)
 }
 
-// RN is the interogation interface implemented by ℝⁿ Clusterers.
+// RN is the interrogative interface implemented by ℝⁿ Clusterers.
 type RN interface {
 	// Return a slice of centers of the clusters.
 	Means() (c []NCenter)
