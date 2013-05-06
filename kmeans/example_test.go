@@ -42,7 +42,7 @@ var feats = []*Feature{
 //  epsilon is allowable error, and
 //  effort is number of attempts to achieve error < epsilon for any k.
 func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clusterer {
-	km := kmeans.NewKmeans(Features(f))
+	km := kmeans.New(Features(f))
 
 	values := km.Values()
 	cut := make([]float64, len(values))

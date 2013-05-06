@@ -34,7 +34,7 @@ type Kmeans struct {
 }
 
 // NewKmeans creates a new k-means Clusterer object populated with data from an Interface value, data.
-func NewKmeans(data cluster.Interface) *Kmeans {
+func New(data cluster.Interface) *Kmeans {
 	return &Kmeans{
 		values: convert(data),
 	}

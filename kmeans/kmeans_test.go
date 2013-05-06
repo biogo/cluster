@@ -119,7 +119,7 @@ var benchData bench = func() bench {
 }()
 
 func Benchmark(b *testing.B) {
-	km := kmeans.NewKmeans(benchData)
+	km := kmeans.New(benchData)
 	km.Seed(20)
 	for i := 0; i < b.N; i++ {
 		km.Cluster()
