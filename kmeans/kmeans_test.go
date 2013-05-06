@@ -5,6 +5,7 @@
 package kmeans_test
 
 import (
+	"code.google.com/p/biogo.cluster"
 	"code.google.com/p/biogo.cluster/kmeans"
 	check "launchpad.net/gocheck"
 	"math/rand"
@@ -38,7 +39,7 @@ var (
 		epsilon float64
 		effort  int
 
-		clusters [][]int
+		clusters []cluster.Indices
 
 		// results determined with R
 		total  int
@@ -47,28 +48,28 @@ var (
 		{
 			feats,
 			0.15, 5,
-			[][]int{{0, 1}, {2, 3, 4, 5}, {6, 7}, {8, 9, 10}},
+			[]cluster.Indices{{0, 1}, {2, 3, 4, 5}, {6, 7}, {8, 9, 10}},
 			4747787,
 			[]float64{0.5, 15820.75, 2500, 3829.3333333333335},
 		},
 		{
 			feats,
 			0.1, 5,
-			[][]int{{8, 9, 10}, {0, 1}, {6}, {2, 3, 4}, {5}, {7}},
+			[]cluster.Indices{{8, 9, 10}, {0, 1}, {6}, {2, 3, 4}, {5}, {7}},
 			4747787,
 			[]float64{3829.3333333333335, 0.5, 0, 52, 0, 0},
 		},
 		{
 			seq,
 			0.2, 5,
-			[][]int{{3}, {7}, {9}, {1}, {6}, {0}, {5}, {4}, {8}, {2}},
+			[]cluster.Indices{{3}, {7}, {9}, {1}, {6}, {0}, {5}, {4}, {8}, {2}},
 			1650000,
 			[]float64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		},
 		{
 			seq,
 			1, 5,
-			[][]int{{4, 5}, {2, 3}, {8, 9}, {0, 1}, {6, 7}},
+			[]cluster.Indices{{4, 5}, {2, 3}, {8, 9}, {0, 1}, {6, 7}},
 			1650000,
 			[]float64{10000, 10000, 10000, 10000, 10000},
 		},

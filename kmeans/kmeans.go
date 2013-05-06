@@ -197,11 +197,11 @@ func (km *Kmeans) Values() []cluster.Value {
 
 // Clusters returns the k clusters.
 // Returns nil if Cluster has not been called.
-func (km *Kmeans) Clusters() [][]int {
+func (km *Kmeans) Clusters() []cluster.Indices {
 	if km.means == nil {
 		return nil
 	}
-	c := make([][]int, len(km.means))
+	c := make([]cluster.Indices, len(km.means))
 
 	for i := range c {
 		c[i] = make([]int, 0, km.means[i].count)

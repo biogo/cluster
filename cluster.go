@@ -7,14 +7,17 @@
 // At this stage only Lloyd's k-means clustering of ℝ² data is supported in subpackages.
 package cluster
 
+// Indices is a list of indexes into a array or slice of Values.
+type Indices []int
+
 // Clusterer is the common interface implemented by clustering types.
 type Clusterer interface {
 	// Cluster the data.
 	Cluster() error
 
-	// Return a slice of slices of ints representing the indices of
+	// Clusters returns a slice of Indices representing the indices of
 	// the original data grouped into clusters.
-	Clusters() (c [][]int)
+	Clusters() []Indices
 
 	// Return a slice of sum of squares distances for the clusters.
 	Within() (ss []float64)
