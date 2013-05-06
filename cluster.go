@@ -19,26 +19,26 @@ type Clusterer interface {
 	// the original data grouped into clusters.
 	Clusters() []Indices
 
-	// Return a slice of sum of squares distances for the clusters.
-	Within() (ss []float64)
-	// Return the total sum of squares distance for the original data.
-	Total() (ss float64)
+	// Within returns a slice of sum of squares distances for the clusters.
+	Within() []float64
+	// total returns the total sum of squares distance for the original data.
+	Total() float64
 }
 
 // R2 is the interrogation interface implemented by ℝ² Clusterers.
 type R2 interface {
-	// Return a slice of centers of the clusters.
-	Centers() (c []Center)
-	// Return the internal representation of the original data.
-	Values() (v []Value)
+	// Centers returns a slice of centers of the clusters.
+	Centers() []Center
+	// Values returns the internal representation of the original data.
+	Values() []Value
 }
 
 // RN is the interrogative interface implemented by ℝⁿ Clusterers.
 type RN interface {
-	// Return a slice of centers of the clusters.
-	Centers() (c []NCenter)
-	// Return the internal representation of the original data.
-	Values() (v []NValue)
+	// Centers returns a slice of centers of the clusters.
+	Centers() []NCenter
+	// Values returns the internal representation of the original data.
+	Values() []NValue
 }
 
 // Interface is a type, typically a collection, that satisfies cluster.Interface can be clustered
