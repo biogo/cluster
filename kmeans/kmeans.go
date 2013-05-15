@@ -148,7 +148,7 @@ func (km *Kmeans) Cluster() error {
 	return nil
 }
 
-// Within calculates the total sum of squares for the data relative to the data mean.
+// Total calculates the total sum of squares for the data relative to the data mean.
 func (km *Kmeans) Total() float64 {
 	var x, y float64
 
