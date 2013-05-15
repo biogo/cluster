@@ -104,15 +104,15 @@ func (s *S) TestKmeans(c *check.C) {
 type bench [][2]float64
 
 func (b bench) Len() int                    { return len(b) }
-func (b bench) Values(i int) (x, y float64) { return float64(b[i][0]), float64(b[i][1]) }
+func (b bench) Values(i int) (x, y float64) { return b[i][0], b[i][1] }
 
 var benchData bench = func() bench {
-	b := make(bench, 0, 100000)
+	b := make(bench, 10000)
 	for i := 0; i < 20; i++ {
 		x, y := float64(rand.Intn(10000)), float64(rand.Intn(10000))
 		r := float64(rand.Intn(200))
-		for j := 0; j < 5000; j++ {
-			b = append(b, [2]float64{x + r*rand.NormFloat64(), y + r*rand.NormFloat64()})
+		for j := range b {
+			b[j] = [2]float64{x + r*rand.NormFloat64(), y + r*rand.NormFloat64()}
 		}
 	}
 	return b
