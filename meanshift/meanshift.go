@@ -9,27 +9,31 @@ import (
 	"code.google.com/p/biogo.cluster"
 	"code.google.com/p/biogo.kdtree"
 	"fmt"
-	"unsafe"
 )
 
-// These types mirror the definitions in cluster.
-type (
-	nval struct {
-		coord []float64
-		w     float64
-	}
-	nValue struct {
-		nval
-		cluster int
-	}
-	nCenter struct {
-		nval
-		count int
-	}
-)
+type pnt []float64
+
+func (p pnt) V() []float64 { return p }
+
+type value struct {
+	pnt
+	w       float64
+	cluster int
+}
+
+func (v *value) Weight() float64 { return v.w }
+func (v *value) Cluster() int    { return v.cluster }
+
+type center struct {
+	pnt
+	w     float64
+	count int
+}
+
+func (c *center) Count() int { return c.count }
 
 type Shifter interface {
-	Init(cluster.NInterface)
+	Init(cluster.Interface)
 	Shift() float64
 	Bandwidth() float64
 	Centers() kdtree.Interface
@@ -40,14 +44,14 @@ type MeanShift struct {
 	k       Shifter
 	tol     float64
 	maxIter int
-	values  []nValue
-	centers []nCenter
+	values  []value
+	centers []center
 	ci      []cluster.Indices
 }
 
 // New creates a new mean shift Clusterer object populated with data from an Interface value, data
 // and using the Kernel k.
-func New(data cluster.NInterface, k Shifter, tol float64, maxIter int) *MeanShift {
+func New(data cluster.Interface, k Shifter, tol float64, maxIter int) *MeanShift {
 	k.Init(data)
 	return &MeanShift{
 		k:       k,
@@ -58,11 +62,10 @@ func New(data cluster.NInterface, k Shifter, tol float64, maxIter int) *MeanShif
 }
 
 // Convert the data to the internal float64 representation.
-func convert(data cluster.NInterface) []nValue {
-	va := make([]nValue, data.Len())
+func convert(data cluster.Interface) []value {
+	va := make([]value, data.Len())
 	for i := 0; i < data.Len(); i++ {
-		p := data.Values(i)
-		va[i] = nValue{nval: nval{coord: p}}
+		va[i] = value{pnt: append(pnt(nil), data.Values(i)...)}
 	}
 	if w, ok := data.(cluster.Weighter); ok {
 		for i := 0; i < data.Len(); i++ {
@@ -98,9 +101,9 @@ func (ms *MeanShift) Cluster() error {
 	for i := 0; i < kc.Len(); i++ {
 		ct.NearestSet(neighbors, kc.Index(i))
 
-		wp := &point{Point: make(kdtree.Point, len(ms.values[0].coord))}
+		wp := &ShiftPoint{Point: make(kdtree.Point, len(ms.values[0].pnt))}
 		for _, c := range neighbors.Heap[:len(neighbors.Heap)-1] {
-			p := c.Comparable.(*point)
+			p := c.Comparable.(*ShiftPoint)
 			if p.ID >= 0 {
 				wp.Members = append(wp.Members, p.ID)
 				p.ID = -1
@@ -119,9 +122,9 @@ func (ms *MeanShift) Cluster() error {
 	}
 
 	ms.ci = make([]cluster.Indices, 0, centers.Len())
-	ms.centers = make([]nCenter, 0, centers.Len())
+	ms.centers = make([]center, 0, centers.Len())
 	centers.Do(func(c kdtree.Comparable, _ *kdtree.Bounding, _ int) (done bool) {
-		p := c.(*point)
+		p := c.(*ShiftPoint)
 		if len(p.Members) == 0 {
 			return
 		}
@@ -129,7 +132,7 @@ func (ms *MeanShift) Cluster() error {
 			ms.values[cm].cluster = len(ms.ci)
 		}
 		ms.ci = append(ms.ci, p.Members)
-		ms.centers = append(ms.centers, nCenter{nval: nval{coord: p.Point}, count: len(p.Members)})
+		ms.centers = append(ms.centers, center{pnt: p.Point, count: len(p.Members)})
 		return
 	})
 
@@ -138,11 +141,11 @@ func (ms *MeanShift) Cluster() error {
 
 // Total calculates the total sum of squares for the data relative to the data mean.
 func (ms *MeanShift) Total() float64 {
-	p := make([]float64, len(ms.values[0].coord))
+	p := make([]float64, len(ms.values[0].pnt))
 
 	for _, v := range ms.values {
 		for i := range p {
-			p[i] += v.coord[i]
+			p[i] += v.pnt[i]
 		}
 	}
 	inv := 1 / float64(len(ms.values))
@@ -153,7 +156,7 @@ func (ms *MeanShift) Total() float64 {
 	var ss float64
 	for _, v := range ms.values {
 		for i := range p {
-			d := p[i] - v.coord[i]
+			d := p[i] - v.pnt[i]
 			ss += d * d
 		}
 	}
@@ -170,8 +173,8 @@ func (ms *MeanShift) Within() []float64 {
 	ss := make([]float64, len(ms.centers))
 
 	for _, v := range ms.values {
-		for i := range ms.centers[0].coord {
-			d := ms.centers[v.cluster].coord[i] - v.coord[i]
+		for i := range ms.centers[0].pnt {
+			d := ms.centers[v.cluster].pnt[i] - v.pnt[i]
 			ss[v.cluster] += d * d
 		}
 	}
@@ -180,13 +183,21 @@ func (ms *MeanShift) Within() []float64 {
 }
 
 // Centers returns the centers.
-func (ms *MeanShift) Centers() []cluster.NCenter {
-	return *(*[]cluster.NCenter)(unsafe.Pointer(&ms.centers))
+func (ms *MeanShift) Centers() []cluster.Center {
+	cs := make([]cluster.Center, len(ms.centers))
+	for i := range ms.centers {
+		cs[i] = &ms.centers[i]
+	}
+	return cs
 }
 
 // Features returns a slice of the values in the MeanShift.
-func (ms *MeanShift) Values() []cluster.NValue {
-	return *(*[]cluster.NValue)(unsafe.Pointer(&ms.values))
+func (ms *MeanShift) Values() []cluster.Value {
+	vs := make([]cluster.Value, len(ms.values))
+	for i := range ms.values {
+		vs[i] = &ms.values[i]
+	}
+	return vs
 }
 
 // Clusters returns the k clusters.

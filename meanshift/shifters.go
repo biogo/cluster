@@ -10,24 +10,25 @@ import (
 	"math"
 )
 
-// A point is a weighted point.
-type point struct {
-	ID      int
+// ShiftPoint is a weighted point which carries group identity and membership information.
+// ShiftPoint satisfies the kdtree.Comparable interface.
+type ShiftPoint struct {
 	Point   []float64
 	Weight  float64
+	ID      int
 	Members []int
 }
 
-func (p *point) Clone() kdtree.Comparable {
-	return &point{Point: append(kdtree.Point(nil), p.Point...), Weight: p.Weight}
+func (p *ShiftPoint) Clone() kdtree.Comparable {
+	return &ShiftPoint{Point: append(kdtree.Point(nil), p.Point...), Weight: p.Weight}
 }
-func (p *point) Compare(c kdtree.Comparable, d kdtree.Dim) float64 {
-	q := c.(*point)
+func (p *ShiftPoint) Compare(c kdtree.Comparable, d kdtree.Dim) float64 {
+	q := c.(*ShiftPoint)
 	return p.Point[d] - q.Point[d]
 }
-func (p *point) Dims() int { return len(p.Point) }
-func (p *point) Distance(c kdtree.Comparable) float64 {
-	q := c.(*point)
+func (p *ShiftPoint) Dims() int { return len(p.Point) }
+func (p *ShiftPoint) Distance(c kdtree.Comparable) float64 {
+	q := c.(*ShiftPoint)
 	var sum float64
 	for dim, c := range p.Point {
 		d := c - q.Point[dim]
@@ -36,28 +37,33 @@ func (p *point) Distance(c kdtree.Comparable) float64 {
 	return sum
 }
 
-// A points is a collection of point values that satisfies the kdtree.Interface.
-type points []*point
+// A ShiftPoints is a collection of ShiftPoint values that satisfies the kdtree.Interface.
+type ShiftPoints []*ShiftPoint
 
-func (p points) Index(i int) kdtree.Comparable         { return p[i] }
-func (p points) Len() int                              { return len(p) }
-func (p points) Pivot(d kdtree.Dim) int                { return plane{points: p, Dim: d}.Pivot() }
-func (p points) Slice(start, end int) kdtree.Interface { return p[start:end] }
-func (p points) Values(i int) []float64                { return p[i].Point }
+func (p ShiftPoints) Index(i int) kdtree.Comparable         { return p[i] }
+func (p ShiftPoints) Len() int                              { return len(p) }
+func (p ShiftPoints) Pivot(d kdtree.Dim) int                { return plane{ShiftPoints: p, Dim: d}.Pivot() }
+func (p ShiftPoints) Slice(start, end int) kdtree.Interface { return p[start:end] }
+func (p ShiftPoints) Values(i int) []float64                { return p[i].Point }
 
-// An plane is a wrapping type that allows a points type be pivoted on a dimension.
+// A plane is a wrapping type that allows a ShiftPoints type be pivoted on a dimension.
 type plane struct {
 	kdtree.Dim
-	points
+	ShiftPoints
 }
 
-func (p plane) Less(i, j int) bool                     { return p.points[i].Point[p.Dim] < p.points[j].Point[p.Dim] }
-func (p plane) Pivot() int                             { return kdtree.Partition(p, kdtree.MedianOfRandoms(p, kdtree.Randoms)) }
-func (p plane) Slice(start, end int) kdtree.SortSlicer { p.points = p.points[start:end]; return p }
-func (p plane) Swap(i, j int)                          { p.points[i], p.points[j] = p.points[j], p.points[i] }
+func (p plane) Less(i, j int) bool {
+	return p.ShiftPoints[i].Point[p.Dim] < p.ShiftPoints[j].Point[p.Dim]
+}
+func (p plane) Pivot() int { return kdtree.Partition(p, kdtree.MedianOfRandoms(p, kdtree.Randoms)) }
+func (p plane) Slice(start, end int) kdtree.SortSlicer {
+	p.ShiftPoints = p.ShiftPoints[start:end]
+	return p
+}
+func (p plane) Swap(i, j int) { p.ShiftPoints[i], p.ShiftPoints[j] = p.ShiftPoints[j], p.ShiftPoints[i] }
 
 type Uniform struct {
-	centers []*point
+	centers []*ShiftPoint
 	cn      []float64
 	tree    *kdtree.Tree
 	hits    *kdtree.DistKeeper
@@ -69,16 +75,16 @@ func NewUniform(h float64) *Uniform {
 	}
 }
 
-func (s *Uniform) Init(data cluster.NInterface) {
+func (s *Uniform) Init(data cluster.Interface) {
 	w, isWeighter := data.(cluster.Weighter)
 
-	s.centers = make([]*point, data.Len())
-	vals := make(points, data.Len())
+	s.centers = make([]*ShiftPoint, data.Len())
+	vals := make(ShiftPoints, data.Len())
 
 	for i := 0; i < data.Len(); i++ {
-		s.centers[i] = &point{ID: i}
+		s.centers[i] = &ShiftPoint{ID: i}
 		s.centers[i].Point = append([]float64(nil), data.Values(i)...)
-		v := &point{Point: data.Values(i)}
+		v := &ShiftPoint{Point: data.Values(i)}
 		if isWeighter {
 			v.Weight = w.Weight(i)
 		} else {
@@ -99,7 +105,7 @@ func (s *Uniform) Shift() (delta float64) {
 
 		div := 0.
 		for _, hit := range s.hits.Heap[:len(s.hits.Heap)-1] {
-			h := hit.Comparable.(*point)
+			h := hit.Comparable.(*ShiftPoint)
 			div += h.Weight
 			for j := range s.cn {
 				s.cn[j] += h.Point[j] * h.Weight
@@ -122,12 +128,12 @@ func (s *Uniform) Shift() (delta float64) {
 }
 
 func (s *Uniform) Centers() kdtree.Interface {
-	return points(s.centers)
+	return ShiftPoints(s.centers)
 }
 
 type TruncGauss struct {
 	h       float64
-	centers []*point
+	centers []*ShiftPoint
 	cn      []float64
 	tree    *kdtree.Tree
 	hits    *kdtree.DistKeeper
@@ -140,16 +146,16 @@ func NewTruncGauss(h, oversample float64) *TruncGauss {
 	}
 }
 
-func (s *TruncGauss) Init(data cluster.NInterface) {
+func (s *TruncGauss) Init(data cluster.Interface) {
 	w, isWeighter := data.(cluster.Weighter)
 
-	s.centers = make([]*point, data.Len())
-	vals := make(points, data.Len())
+	s.centers = make([]*ShiftPoint, data.Len())
+	vals := make(ShiftPoints, data.Len())
 
 	for i := 0; i < data.Len(); i++ {
-		s.centers[i] = &point{ID: i}
+		s.centers[i] = &ShiftPoint{ID: i}
 		s.centers[i].Point = append([]float64(nil), data.Values(i)...)
-		v := &point{Point: data.Values(i)}
+		v := &ShiftPoint{Point: data.Values(i)}
 		if isWeighter {
 			v.Weight = w.Weight(i)
 		} else {
@@ -171,7 +177,7 @@ func (s *TruncGauss) Shift() (delta float64) {
 
 		div := 0.
 		for _, hit := range s.hits.Heap[:len(s.hits.Heap)-1] {
-			h := hit.Comparable.(*point)
+			h := hit.Comparable.(*ShiftPoint)
 			kfn := h.Weight * math.Exp(hit.Comparable.Distance(c)*inv)
 			div += kfn
 			for j := range s.cn {
@@ -195,5 +201,5 @@ func (s *TruncGauss) Shift() (delta float64) {
 }
 
 func (s *TruncGauss) Centers() kdtree.Interface {
-	return points(s.centers)
+	return ShiftPoints(s.centers)
 }

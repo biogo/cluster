@@ -50,14 +50,14 @@ var (
 			0.15, 5,
 			[]cluster.Indices{{0, 1}, {2, 3, 4, 5}, {6, 7}, {8, 9, 10}},
 			4747787,
-			[]float64{0.5, 15820.75, 2500, 3829.3333333333335},
+			[]float64{0.5, 15820.75, 2500, 3829.333333333333},
 		},
 		{
 			feats,
 			0.1, 5,
 			[]cluster.Indices{{8, 9, 10}, {0, 1}, {6}, {2, 3, 4}, {5}, {7}},
 			4747787,
-			[]float64{3829.3333333333335, 0.5, 0, 52, 0, 0},
+			[]float64{3829.333333333333, 0.5, 0, 52, 0, 0},
 		},
 		{
 			seq,
@@ -80,7 +80,8 @@ var (
 func (s *S) TestKmeans(c *check.C) {
 	for i, t := range tests {
 		rand.Seed(1)
-		km := ClusterFeatures(t.set, t.epsilon, t.effort)
+		km, err := ClusterFeatures(t.set, t.epsilon, t.effort)
+		c.Assert(err, check.Equals, nil)
 		clusters := km.Clusters()
 		c.Logf("Test %d: epsilon = %.2f effort = %d", i, t.epsilon, t.effort)
 		for ci, cl := range clusters {
@@ -103,8 +104,8 @@ func (s *S) TestKmeans(c *check.C) {
 
 type bench [][2]float64
 
-func (b bench) Len() int                    { return len(b) }
-func (b bench) Values(i int) (x, y float64) { return b[i][0], b[i][1] }
+func (b bench) Len() int               { return len(b) }
+func (b bench) Values(i int) []float64 { return b[i][:] }
 
 var benchData bench = func() bench {
 	b := make(bench, 10000)
@@ -119,7 +120,7 @@ var benchData bench = func() bench {
 }()
 
 func Benchmark(b *testing.B) {
-	km := kmeans.New(benchData)
+	km, _ := kmeans.New(benchData)
 	km.Seed(20)
 	for i := 0; i < b.N; i++ {
 		km.Cluster()

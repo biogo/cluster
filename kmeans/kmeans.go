@@ -2,50 +2,76 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package kmeans provides Lloyd's k-means clustering for ℝ² data.
+// Package kmeans provides Lloyd's k-means clustering for ℝⁿ data.
 package kmeans
 
 import (
 	"code.google.com/p/biogo.cluster"
 	"errors"
 	"math/rand"
-	"unsafe"
 )
 
-// These types mirror the definitions in cluster.
-type (
-	val struct {
-		x, y, w float64
+type point []float64
+
+func (p point) V() []float64 { return p }
+
+type value struct {
+	point
+	w       float64
+	cluster int
+}
+
+func (v *value) Weight() float64 { return v.w }
+func (v *value) Cluster() int    { return v.cluster }
+
+type center struct {
+	point
+	w     float64
+	count int
+}
+
+func (c *center) zero() {
+	p := c.point
+	for i := range p {
+		p[i] = 0
 	}
-	value struct {
-		val
-		cluster int
-	}
-	center struct {
-		val
-		count int
-	}
-)
+	*c = center{point: p}
+}
+
+func (c *center) Count() int { return c.count }
 
 // A Kmeans clusters ℝ² data according to the Lloyd k-means algorithm.
 type Kmeans struct {
+	dims   int
 	values []value
 	means  []center
 }
 
 // NewKmeans creates a new k-means Clusterer object populated with data from an Interface value, data.
-func New(data cluster.Interface) *Kmeans {
-	return &Kmeans{
-		values: convert(data),
+func New(data cluster.Interface) (*Kmeans, error) {
+	v, d, err := convert(data)
+	if err != nil {
+		return nil, err
 	}
+	return &Kmeans{
+		dims:   d,
+		values: v,
+	}, nil
 }
 
 // Convert the data to the internal float64 representation.
-func convert(data cluster.Interface) []value {
+func convert(data cluster.Interface) ([]value, int, error) {
 	va := make([]value, data.Len())
+	if data.Len() == 0 {
+		return nil, 0, errors.New("kmeans: no data")
+	}
+	dim := len(data.Values(0))
 	for i := 0; i < data.Len(); i++ {
-		x, y := data.Values(i)
-		va[i] = value{val: val{x: x, y: y}}
+		vec := data.Values(i)
+		if len(vec) != dim {
+			return nil, 0, errors.New("kmeans: mismatched dimensions")
+		}
+		va[i] = value{point: append(point(nil), vec...)}
 	}
 	if w, ok := data.(cluster.Weighter); ok {
 		for i := 0; i < data.Len(); i++ {
@@ -57,14 +83,17 @@ func convert(data cluster.Interface) []value {
 		}
 	}
 
-	return va
+	return va, dim, nil
 }
 
 // Seed generates the initial means for the k-means algorithm.
 func (km *Kmeans) Seed(k int) {
 	km.means = make([]center, k)
+	for i := range km.means {
+		km.means[i].point = make(point, km.dims)
+	}
 
-	km.means[0].val = km.values[rand.Intn(len(km.values))].val
+	copy(km.means[0].point, km.values[rand.Intn(len(km.values))].point)
 	if k == 1 {
 		return
 	}
@@ -72,7 +101,7 @@ func (km *Kmeans) Seed(k int) {
 	for i := 1; i < k; i++ {
 		sum := 0.
 		for j, v := range km.values {
-			_, min := km.nearest(v.val)
+			_, min := km.nearest(v.point)
 			d[j] = min
 			sum += d[j]
 		}
@@ -81,24 +110,33 @@ func (km *Kmeans) Seed(k int) {
 		for sum = d[0]; sum < target; sum += d[j] {
 			j++
 		}
-		km.means[i].val = km.values[j].val
+		copy(km.means[i].point, km.values[j].point)
 	}
 }
 
 // SetCenters sets the locations of the centers.
 func (km *Kmeans) SetCenters(c []cluster.Center) {
-	km.means = *(*[]center)(unsafe.Pointer(&c))
+	km.means = make([]center, len(c))
+	for i, cv := range c {
+		km.means[i] = center{point: append(point(nil), cv.V()...)}
+	}
 }
 
 // Find the nearest center to the point v. Returns c, the index of the nearest center
 // and min, the square of the distance from v to that center.
-func (km *Kmeans) nearest(v val) (c int, min float64) {
-	xd, yd := v.x-km.means[0].x, v.y-km.means[0].y
-	min = xd*xd + yd*yd
+func (km *Kmeans) nearest(v point) (c int, min float64) {
+	var ad float64
+	for j := range v {
+		ad = v[j] - km.means[0].point[j]
+		min += ad * ad
+	}
 
 	for i := 1; i < len(km.means); i++ {
-		xd, yd = v.x-km.means[i].x, v.y-km.means[i].y
-		d := xd*xd + yd*yd
+		var d float64
+		for j := range v {
+			ad = v[j] - km.means[i].point[j]
+			d += ad * ad
+		}
 		if d < min {
 			min = d
 			c = i
@@ -114,29 +152,31 @@ func (km *Kmeans) Cluster() error {
 		return errors.New("kmeans: no centers")
 	}
 	for i, v := range km.values {
-		n, _ := km.nearest(v.val)
+		n, _ := km.nearest(v.point)
 		km.values[i].cluster = n
 	}
 
 	for {
 		for i := range km.means {
-			km.means[i] = center{}
+			km.means[i].zero()
 		}
 		for _, v := range km.values {
-			km.means[v.cluster].x += v.x * v.w
-			km.means[v.cluster].y += v.y * v.w
+			for j := range km.means[v.cluster].point {
+				km.means[v.cluster].point[j] += v.point[j] * v.w
+			}
 			km.means[v.cluster].w += v.w
 			km.means[v.cluster].count++
 		}
 		for i := range km.means {
 			inv := 1 / km.means[i].w
-			km.means[i].x *= inv
-			km.means[i].y *= inv
+			for j := range km.means[i].point {
+				km.means[i].point[j] *= inv
+			}
 		}
 
 		deltas := 0
 		for i, v := range km.values {
-			if n, _ := km.nearest(v.val); n != v.cluster {
+			if n, _ := km.nearest(v.point); n != v.cluster {
 				deltas++
 				km.values[i].cluster = n
 			}
@@ -150,20 +190,23 @@ func (km *Kmeans) Cluster() error {
 
 // Total calculates the total sum of squares for the data relative to the data mean.
 func (km *Kmeans) Total() float64 {
-	var x, y float64
-
+	p := make([]float64, km.dims)
 	for _, v := range km.values {
-		x += v.x
-		y += v.y
+		for j := range p {
+			p[j] += v.point[j]
+		}
 	}
 	inv := 1 / float64(len(km.values))
-	x *= inv
-	y *= inv
+	for j := range p {
+		p[j] *= inv
+	}
 
 	var ss float64
 	for _, v := range km.values {
-		dx, dy := x-v.x, y-v.y
-		ss += dx*dx + dy*dy
+		for j := range p {
+			d := p[j] - v.point[j]
+			ss += d * d
+		}
 	}
 
 	return ss
@@ -178,8 +221,10 @@ func (km *Kmeans) Within() []float64 {
 	ss := make([]float64, len(km.means))
 
 	for _, v := range km.values {
-		dx, dy := km.means[v.cluster].x-v.x, km.means[v.cluster].y-v.y
-		ss[v.cluster] += dx*dx + dy*dy
+		for j := range v.point {
+			d := km.means[v.cluster].point[j] - v.point[j]
+			ss[v.cluster] += d * d
+		}
 	}
 
 	return ss
@@ -187,12 +232,20 @@ func (km *Kmeans) Within() []float64 {
 
 // Centers returns the k-means.
 func (km *Kmeans) Centers() []cluster.Center {
-	return *(*[]cluster.Center)(unsafe.Pointer(&km.means))
+	cs := make([]cluster.Center, len(km.means))
+	for i := range km.means {
+		cs[i] = &km.means[i]
+	}
+	return cs
 }
 
 // Features returns a slice of the values in the Kmeans.
 func (km *Kmeans) Values() []cluster.Value {
-	return *(*[]cluster.Value)(unsafe.Pointer(&km.values))
+	vs := make([]cluster.Value, len(km.values))
+	for i := range km.values {
+		vs[i] = &km.values[i]
+	}
+	return vs
 }
 
 // Clusters returns the k clusters.

@@ -5,7 +5,6 @@
 package kmeans_test
 
 import (
-	"code.google.com/p/biogo.cluster"
 	"code.google.com/p/biogo.cluster/kmeans"
 	"fmt"
 	"strings"
@@ -21,8 +20,8 @@ func (f *Feature) Len() int { return f.End - f.Start }
 
 type Features []*Feature
 
-func (f Features) Len() int                    { return len(f) }
-func (f Features) Values(i int) (x, y float64) { return float64(f[i].Start), float64(f[i].End) }
+func (f Features) Len() int               { return len(f) }
+func (f Features) Values(i int) []float64 { return []float64{float64(f[i].Start), float64(f[i].End)} }
 
 var feats = []*Feature{
 	{ID: "0", Start: 1, End: 1700},
@@ -41,13 +40,17 @@ var feats = []*Feature{
 // Cluster feat.Features on the basis of location where:
 //  epsilon is allowable error, and
 //  effort is number of attempts to achieve error < epsilon for any k.
-func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clusterer {
-	km := kmeans.New(Features(f))
+func ClusterFeatures(f []*Feature, epsilon float64, effort int) (*kmeans.Kmeans, error) {
+	km, err := kmeans.New(Features(f))
+	if err != nil {
+		return nil, err
+	}
 
 	values := km.Values()
 	cut := make([]float64, len(values))
 	for i, v := range values {
-		l := epsilon * (v.Y() - v.X())
+		v := v.V()
+		l := epsilon * (v[1] - v[0])
 		cut[i] = l * l
 	}
 
@@ -58,13 +61,15 @@ func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clustere
 			km.Cluster()
 			centers := km.Centers()
 			for i, v := range values {
-				dx, dy := centers[v.Cluster()].X()-v.X(), centers[v.Cluster()].Y()-v.Y()
+				cv := centers[v.Cluster()].V()
+				vv := v.V()
+				dx, dy := cv[0]-vv[0], cv[1]-vv[1]
 				ok := dx*dx+dy*dy < cut[i]
 				if !ok {
 					continue ATTEMPT
 				}
 			}
-			return km
+			return km, nil
 		}
 	}
 
@@ -72,7 +77,10 @@ func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clustere
 }
 
 func Example() {
-	km := ClusterFeatures(feats, 0.15, 5)
+	km, err := ClusterFeatures(feats, 0.15, 5)
+	if err != nil {
+		return
+	}
 	for ci, c := range km.Clusters() {
 		fmt.Printf("Cluster %d:\n", ci)
 		for _, i := range c {
