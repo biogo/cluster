@@ -7,7 +7,6 @@ package meanshift
 
 import (
 	"code.google.com/p/biogo.cluster"
-	"code.google.com/p/biogo.kdtree"
 	"fmt"
 )
 
@@ -36,7 +35,7 @@ type Shifter interface {
 	Init(cluster.Interface)
 	Shift() float64
 	Bandwidth() float64
-	Centers() kdtree.Interface
+	Centers() ([]cluster.Center, []cluster.Indices)
 }
 
 // A MeanShift clusters ℝⁿ data according to the mean shift algorithm.
@@ -92,49 +91,15 @@ func (ms *MeanShift) Cluster() error {
 		}
 	}
 
-	var (
-		kc        = ms.k.Centers()
-		ct        = kdtree.New(kc, false)
-		neighbors = kdtree.NewDistKeeper(ms.k.Bandwidth())
-		centers   kdtree.Tree
-	)
-	for i := 0; i < kc.Len(); i++ {
-		ct.NearestSet(neighbors, kc.Index(i))
-
-		wp := &ShiftPoint{Point: make(kdtree.Point, len(ms.values[0].pnt))}
-		for _, c := range neighbors.Heap[:len(neighbors.Heap)-1] {
-			p := c.Comparable.(*ShiftPoint)
-			if p.ID >= 0 {
-				wp.Members = append(wp.Members, p.ID)
-				p.ID = -1
-			}
-			for j := range wp.Point {
-				wp.Point[j] += p.Point[j] / float64(len(neighbors.Heap)-1)
-			}
+	var cen []cluster.Center
+	cen, ms.ci = ms.k.Centers()
+	ms.centers = make([]center, len(cen))
+	for i, c := range cen {
+		ms.centers[i] = center{pnt: c.V(), count: c.Count()}
+		for _, j := range ms.ci[i] {
+			ms.values[j].cluster = i
 		}
-
-		if _, d := centers.Nearest(wp); d != 0 {
-			centers.Insert(wp, false)
-		}
-
-		neighbors.Heap[0] = kdtree.ComparableDist{Comparable: nil, Dist: ms.k.Bandwidth()}
-		neighbors.Heap = neighbors.Heap[:1]
 	}
-
-	ms.ci = make([]cluster.Indices, 0, centers.Len())
-	ms.centers = make([]center, 0, centers.Len())
-	centers.Do(func(c kdtree.Comparable, _ *kdtree.Bounding, _ int) (done bool) {
-		p := c.(*ShiftPoint)
-		if len(p.Members) == 0 {
-			return
-		}
-		for _, cm := range p.Members {
-			ms.values[cm].cluster = len(ms.ci)
-		}
-		ms.ci = append(ms.ci, p.Members)
-		ms.centers = append(ms.centers, center{pnt: p.Point, count: len(p.Members)})
-		return
-	})
 
 	return nil
 }
@@ -164,8 +129,8 @@ func (ms *MeanShift) Total() float64 {
 	return ss
 }
 
-// Within calculates the sum of squares within each cluster.
-// Returns nil if Cluster has not been called.
+// Within calculates the sum of squares within each cluster. It returns nil if Cluster
+// has not been called.
 func (ms *MeanShift) Within() []float64 {
 	if ms.centers == nil {
 		return nil
@@ -182,7 +147,7 @@ func (ms *MeanShift) Within() []float64 {
 	return ss
 }
 
-// Centers returns the centers.
+// Centers returns the cluster centers.
 func (ms *MeanShift) Centers() []cluster.Center {
 	cs := make([]cluster.Center, len(ms.centers))
 	for i := range ms.centers {
@@ -191,7 +156,7 @@ func (ms *MeanShift) Centers() []cluster.Center {
 	return cs
 }
 
-// Features returns a slice of the values in the MeanShift.
+// Values returns returns a slice of the original data values in the MeanShift.
 func (ms *MeanShift) Values() []cluster.Value {
 	vs := make([]cluster.Value, len(ms.values))
 	for i := range ms.values {
@@ -200,8 +165,7 @@ func (ms *MeanShift) Values() []cluster.Value {
 	return vs
 }
 
-// Clusters returns the k clusters.
-// Returns nil if Cluster has not been called.
+// Clusters returns the clusters. Clusters returns nil if Cluster has not been called.
 func (ms *MeanShift) Clusters() []cluster.Indices {
 	return ms.ci
 }

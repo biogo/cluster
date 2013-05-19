@@ -132,7 +132,6 @@ func BenchmarkTruncGauss(b *testing.B) {
 			b.Log(err)
 		}
 	}
-	_ = s.Centers()
 }
 
 func BenchmarkUniform(b *testing.B) {
@@ -143,5 +142,4 @@ func BenchmarkUniform(b *testing.B) {
 			b.Log(err)
 		}
 	}
-	_ = s.Centers()
 }
