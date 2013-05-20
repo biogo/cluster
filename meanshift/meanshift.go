@@ -31,14 +31,24 @@ type center struct {
 
 func (c *center) Cluster() cluster.Indices { return c.indices }
 
+// Shifter implements a single step of the mean shift algorithm.
 type Shifter interface {
+	// Init initialises the Shifter with the provided data.
 	Init(cluster.Interface)
+
+	// Shift performs a single iteration of the mean shift algorithm and
+	// returns the sum of squares differences between the initial state
+	// and the final state.
 	Shift() float64
+
+	// Bandwidth returns the bandwidth parameter of the Shifter.
 	Bandwidth() float64
-	Centers() ([]cluster.Center, []cluster.Indices)
+
+	// Centers returns the cluster centers of the clustered data.
+	Centers() []cluster.Center
 }
 
-// A MeanShift clusters ℝⁿ data according to the mean shift algorithm.
+// MeanShift implements data clustering using the mean shift algorithm.
 type MeanShift struct {
 	k       Shifter
 	tol     float64
@@ -49,7 +59,7 @@ type MeanShift struct {
 }
 
 // New creates a new mean shift Clusterer object populated with data from an Interface value, data
-// and using the Kernel k.
+// and using the Shifter k.
 func New(data cluster.Interface, k Shifter, tol float64, maxIter int) *MeanShift {
 	k.Init(data)
 	return &MeanShift{
@@ -60,7 +70,7 @@ func New(data cluster.Interface, k Shifter, tol float64, maxIter int) *MeanShift
 	}
 }
 
-// Convert the data to the internal float64 representation.
+// convert renders data to the internal float64 representation for a MeanShift.
 func convert(data cluster.Interface) []value {
 	va := make([]value, data.Len())
 	for i := 0; i < data.Len(); i++ {
@@ -79,7 +89,7 @@ func convert(data cluster.Interface) []value {
 	return va
 }
 
-// Cluster the data using the mean shift algorithm.
+// Cluster runs a clustering of the data using the mean shift algorithm.
 func (ms *MeanShift) Cluster() error {
 	for i := 0; ; i++ {
 		delta := ms.k.Shift()
@@ -87,14 +97,16 @@ func (ms *MeanShift) Cluster() error {
 			break
 		}
 		if i > ms.maxIter {
-			return fmt.Errorf("meanshift: exceeded max iterations: delta=%f", delta)
+			return fmt.Errorf("meanshift: exceeded maximum iterations: delta=%f", delta)
 		}
 	}
 
 	var cen []cluster.Center
-	cen, ms.ci = ms.k.Centers()
+	cen = ms.k.Centers()
+	ms.ci = make([]cluster.Indices, len(cen))
 	ms.centers = make([]center, len(cen))
 	for i, c := range cen {
+		ms.ci[i] = c.Cluster()
 		ms.centers[i] = center{pnt: c.V(), indices: ms.ci[i]}
 		for _, j := range ms.ci[i] {
 			ms.values[j].cluster = i
@@ -147,7 +159,7 @@ func (ms *MeanShift) Within() []float64 {
 	return ss
 }
 
-// Centers returns the cluster centers.
+// Centers returns the centers determined by a previous call to Cluster.
 func (ms *MeanShift) Centers() []cluster.Center {
 	cs := make([]cluster.Center, len(ms.centers))
 	for i := range ms.centers {
@@ -156,7 +168,7 @@ func (ms *MeanShift) Centers() []cluster.Center {
 	return cs
 }
 
-// Values returns returns a slice of the original data values in the MeanShift.
+// Values returns a slice of the values in the MeanShift.
 func (ms *MeanShift) Values() []cluster.Value {
 	vs := make([]cluster.Value, len(ms.values))
 	for i := range ms.values {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package kmeans provides Lloyd's k-means clustering for ℝⁿ data.
+// Package kmeans implements Lloyd's k-means clustering for ℝⁿ data.
 package kmeans
 
 import (
@@ -48,7 +48,7 @@ type Kmeans struct {
 	means  []center
 }
 
-// NewKmeans creates a new k-means object populated with data from an Interface value, data.
+// New creates a new k-means object populated with data from an Interface value, data.
 func New(data cluster.Interface) (*Kmeans, error) {
 	v, d, err := convert(data)
 	if err != nil {
@@ -60,7 +60,7 @@ func New(data cluster.Interface) (*Kmeans, error) {
 	}, nil
 }
 
-// Convert the data to the internal float64 representation.
+// convert renders data to the internal float64 representation for a Kmeans.
 func convert(data cluster.Interface) ([]value, int, error) {
 	va := make([]value, data.Len())
 	if data.Len() == 0 {
@@ -87,7 +87,8 @@ func convert(data cluster.Interface) ([]value, int, error) {
 	return va, dim, nil
 }
 
-// Seed generates the initial means for the k-means algorithm.
+// Seed generates the initial means for the k-means algorithm according to the k-means++
+// algorithm
 func (km *Kmeans) Seed(k int) {
 	km.means = make([]center, k)
 	for i := range km.means {
@@ -115,7 +116,7 @@ func (km *Kmeans) Seed(k int) {
 	}
 }
 
-// SetCenters sets the locations of the centers.
+// SetCenters sets the locations of the centers to c.
 func (km *Kmeans) SetCenters(c []cluster.Center) {
 	km.means = make([]center, len(c))
 	for i, cv := range c {
@@ -147,7 +148,7 @@ func (km *Kmeans) nearest(v point) (c int, min float64) {
 	return c, min
 }
 
-// Cluster the data using the standard k-means algorithm.
+// Cluster runs a clustering of the data using the k-means algorithm.
 func (km *Kmeans) Cluster() error {
 	if len(km.means) == 0 {
 		return errors.New("kmeans: no centers")
@@ -231,7 +232,7 @@ func (km *Kmeans) Within() []float64 {
 	return ss
 }
 
-// Centers returns the k-means.
+// Centers returns the k centers determined by a previous call to Cluster.
 func (km *Kmeans) Centers() []cluster.Center {
 	c := make([]cluster.Indices, len(km.means))
 	for i := range c {
@@ -250,7 +251,7 @@ func (km *Kmeans) Centers() []cluster.Center {
 	return cs
 }
 
-// Features returns a slice of the values in the Kmeans.
+// Values returns a slice of the values in the Kmeans.
 func (km *Kmeans) Values() []cluster.Value {
 	vs := make([]cluster.Value, len(km.values))
 	for i := range km.values {

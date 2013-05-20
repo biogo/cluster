@@ -127,7 +127,7 @@ func (s *Uniform) Shift() (delta float64) {
 	return delta
 }
 
-func (s *Uniform) Centers() ([]cluster.Center, []cluster.Indices) {
+func (s *Uniform) Centers() []cluster.Center {
 	return collate(shiftPoints(s.centers), s.Bandwidth())
 }
 
@@ -200,11 +200,11 @@ func (s *TruncGauss) Shift() (delta float64) {
 	return delta
 }
 
-func (s *TruncGauss) Centers() ([]cluster.Center, []cluster.Indices) {
+func (s *TruncGauss) Centers() []cluster.Center {
 	return collate(shiftPoints(s.centers), s.Bandwidth())
 }
 
-func collate(kc kdtree.Interface, h float64) ([]cluster.Center, []cluster.Indices) {
+func collate(kc kdtree.Interface, h float64) []cluster.Center {
 	var (
 		ct        = kdtree.New(kc, false)
 		neighbors = kdtree.NewDistKeeper(h)
@@ -234,16 +234,14 @@ func collate(kc kdtree.Interface, h float64) ([]cluster.Center, []cluster.Indice
 	}
 
 	cen := make([]cluster.Center, 0, centers.Len())
-	ci := make([]cluster.Indices, 0, centers.Len())
 	centers.Do(func(c kdtree.Comparable, _ *kdtree.Bounding, _ int) (done bool) {
 		p := c.(*shiftPoint)
 		if len(p.Members) == 0 {
 			return
 		}
 		cen = append(cen, &center{pnt: p.Point, indices: p.Members})
-		ci = append(ci, p.Members)
 		return
 	})
 
-	return cen, ci
+	return cen
 }
