@@ -26,8 +26,9 @@ func (v *value) Cluster() int    { return v.cluster }
 
 type center struct {
 	point
-	w     float64
-	count int
+	w       float64
+	count   int
+	indices cluster.Indices
 }
 
 func (c *center) zero() {
@@ -38,16 +39,16 @@ func (c *center) zero() {
 	*c = center{point: p}
 }
 
-func (c *center) Count() int { return c.count }
+func (c *center) Cluster() cluster.Indices { return c.indices }
 
-// A Kmeans clusters ℝ² data according to the Lloyd k-means algorithm.
+// Kmeans implements clustering of ℝⁿ data according to the Lloyd k-means algorithm.
 type Kmeans struct {
 	dims   int
 	values []value
 	means  []center
 }
 
-// NewKmeans creates a new k-means Clusterer object populated with data from an Interface value, data.
+// NewKmeans creates a new k-means object populated with data from an Interface value, data.
 func New(data cluster.Interface) (*Kmeans, error) {
 	v, d, err := convert(data)
 	if err != nil {
@@ -232,10 +233,20 @@ func (km *Kmeans) Within() []float64 {
 
 // Centers returns the k-means.
 func (km *Kmeans) Centers() []cluster.Center {
+	c := make([]cluster.Indices, len(km.means))
+	for i := range c {
+		c[i] = make([]int, 0, km.means[i].count)
+	}
+	for i, v := range km.values {
+		c[v.cluster] = append(c[v.cluster], i)
+	}
+
 	cs := make([]cluster.Center, len(km.means))
 	for i := range km.means {
+		km.means[i].indices = c[i]
 		cs[i] = &km.means[i]
 	}
+
 	return cs
 }
 
@@ -246,22 +257,4 @@ func (km *Kmeans) Values() []cluster.Value {
 		vs[i] = &km.values[i]
 	}
 	return vs
-}
-
-// Clusters returns the k clusters.
-// Returns nil if Cluster has not been called.
-func (km *Kmeans) Clusters() []cluster.Indices {
-	if km.means == nil {
-		return nil
-	}
-	c := make([]cluster.Indices, len(km.means))
-
-	for i := range c {
-		c[i] = make([]int, 0, km.means[i].count)
-	}
-	for i, v := range km.values {
-		c[v.cluster] = append(c[v.cluster], i)
-	}
-
-	return c
 }

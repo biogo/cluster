@@ -13,10 +13,6 @@ type Clusterer interface {
 	// Cluster the data.
 	Cluster() error
 
-	// Clusters returns a slice of Indices representing the indices of
-	// the original data grouped into clusters.
-	Clusters() []Indices
-
 	// Centers returns a slice of centers of the clusters.
 	Centers() []Center
 
@@ -48,8 +44,8 @@ type Value interface {
 	Cluster() int
 }
 
-// A Center is a representation of a cluster center in ℝ².
+// A Center is a representation of a cluster center in ℝⁿ.
 type Center interface {
 	Point
-	Count() int
+	Cluster() Indices
 }

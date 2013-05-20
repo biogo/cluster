@@ -46,9 +46,9 @@ func Example() {
 		return
 	}
 
-	for ci, c := range ms.Clusters() {
+	for ci, c := range ms.Centers() {
 		fmt.Printf("Cluster %d:\n", ci)
-		for _, i := range c {
+		for _, i := range c.Cluster() {
 			f := feats[i]
 			fmt.Printf("%2s %s%s\n",
 				f.ID,

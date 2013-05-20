@@ -82,11 +82,11 @@ func (s *S) TestKmeans(c *check.C) {
 		rand.Seed(1)
 		km, err := ClusterFeatures(t.set, t.epsilon, t.effort)
 		c.Assert(err, check.Equals, nil)
-		clusters := km.Clusters()
+		clusters := km.Centers()
 		c.Logf("Test %d: epsilon = %.2f effort = %d", i, t.epsilon, t.effort)
 		for ci, cl := range clusters {
 			c.Logf("Cluster %d:", ci)
-			for _, j := range cl {
+			for _, j := range cl.Cluster() {
 				f := t.set[j]
 				c.Logf("%2s %s%s",
 					f.ID,
@@ -96,7 +96,9 @@ func (s *S) TestKmeans(c *check.C) {
 			}
 		}
 		c.Log()
-		c.Check(clusters, check.DeepEquals, t.clusters)
+		for ci, m := range clusters {
+			c.Check(m.Cluster(), check.DeepEquals, t.clusters[ci])
+		}
 		c.Check(int(km.Total()), check.Equals, t.total)
 		c.Check(km.Within(), check.DeepEquals, t.within)
 	}
@@ -125,5 +127,5 @@ func Benchmark(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		km.Cluster()
 	}
-	_ = km.Clusters()
+	_ = km.Centers()
 }

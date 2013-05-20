@@ -25,11 +25,11 @@ func (v *value) Cluster() int    { return v.cluster }
 
 type center struct {
 	pnt
-	w     float64
-	count int
+	w       float64
+	indices cluster.Indices
 }
 
-func (c *center) Count() int { return c.count }
+func (c *center) Cluster() cluster.Indices { return c.indices }
 
 type Shifter interface {
 	Init(cluster.Interface)
@@ -95,7 +95,7 @@ func (ms *MeanShift) Cluster() error {
 	cen, ms.ci = ms.k.Centers()
 	ms.centers = make([]center, len(cen))
 	for i, c := range cen {
-		ms.centers[i] = center{pnt: c.V(), count: c.Count()}
+		ms.centers[i] = center{pnt: c.V(), indices: ms.ci[i]}
 		for _, j := range ms.ci[i] {
 			ms.values[j].cluster = i
 		}
@@ -163,9 +163,4 @@ func (ms *MeanShift) Values() []cluster.Value {
 		vs[i] = &ms.values[i]
 	}
 	return vs
-}
-
-// Clusters returns the clusters. Clusters returns nil if Cluster has not been called.
-func (ms *MeanShift) Clusters() []cluster.Indices {
-	return ms.ci
 }

@@ -81,9 +81,9 @@ func Example() {
 	if err != nil {
 		return
 	}
-	for ci, c := range km.Clusters() {
+	for ci, c := range km.Centers() {
 		fmt.Printf("Cluster %d:\n", ci)
-		for _, i := range c {
+		for _, i := range c.Cluster() {
 			f := feats[i]
 			fmt.Printf("%2s %s%s\n",
 				f.ID,

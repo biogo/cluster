@@ -240,7 +240,7 @@ func collate(kc kdtree.Interface, h float64) ([]cluster.Center, []cluster.Indice
 		if len(p.Members) == 0 {
 			return
 		}
-		cen = append(cen, &center{pnt: p.Point, count: len(p.Members)})
+		cen = append(cen, &center{pnt: p.Point, indices: p.Members})
 		ci = append(ci, p.Members)
 		return
 	})
