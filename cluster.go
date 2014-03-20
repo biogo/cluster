@@ -50,7 +50,7 @@ type Value interface {
 type Center interface {
 	Point
 
-	// Cluster returns a set if indices into the slice returned by Clusterer.Values() that
+	// Members returns a set of indices into the slice returned by Clusterer.Values() that
 	// refers to the Values associated with the Center.
-	Cluster() Indices
+	Members() Indices
 }

@@ -39,7 +39,7 @@ func (c *center) zero() {
 	*c = center{point: p}
 }
 
-func (c *center) Cluster() cluster.Indices { return c.indices }
+func (c *center) Members() cluster.Indices { return c.indices }
 
 // Kmeans implements clustering of ℝⁿ data according to the Lloyd k-means algorithm.
 type Kmeans struct {

@@ -29,7 +29,7 @@ type center struct {
 	indices cluster.Indices
 }
 
-func (c *center) Cluster() cluster.Indices { return c.indices }
+func (c *center) Members() cluster.Indices { return c.indices }
 
 // Shifter implements a single step of the mean shift algorithm.
 type Shifter interface {
@@ -106,7 +106,7 @@ func (ms *MeanShift) Cluster() error {
 	ms.ci = make([]cluster.Indices, len(cen))
 	ms.centers = make([]center, len(cen))
 	for i, c := range cen {
-		ms.ci[i] = c.Cluster()
+		ms.ci[i] = c.Members()
 		ms.centers[i] = center{pnt: c.V(), indices: ms.ci[i]}
 		for _, j := range ms.ci[i] {
 			ms.values[j].cluster = i

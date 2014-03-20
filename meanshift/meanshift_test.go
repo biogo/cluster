@@ -90,7 +90,7 @@ func (s *S) TestMeanShift(c *check.C) {
 		clusters := ms.Centers()
 		for ci, cl := range clusters {
 			c.Logf("Cluster %d:", ci)
-			for _, j := range cl.Cluster() {
+			for _, j := range cl.Members() {
 				f := t.set[j]
 				c.Logf("%2s %s%s",
 					f.ID,
@@ -102,7 +102,7 @@ func (s *S) TestMeanShift(c *check.C) {
 		}
 		c.Log()
 		for ci, m := range clusters {
-			c.Check(m.Cluster(), check.DeepEquals, t.clusters[ci])
+			c.Check(m.Members(), check.DeepEquals, t.clusters[ci])
 		}
 		c.Check(int(ms.Total()), check.Equals, t.total)
 		c.Check(ms.Within(), check.DeepEquals, t.within)

@@ -86,7 +86,7 @@ func (s *S) TestKmeans(c *check.C) {
 		c.Logf("Test %d: epsilon = %.2f effort = %d", i, t.epsilon, t.effort)
 		for ci, cl := range clusters {
 			c.Logf("Cluster %d:", ci)
-			for _, j := range cl.Cluster() {
+			for _, j := range cl.Members() {
 				f := t.set[j]
 				c.Logf("%2s %s%s",
 					f.ID,
@@ -97,7 +97,7 @@ func (s *S) TestKmeans(c *check.C) {
 		}
 		c.Log()
 		for ci, m := range clusters {
-			c.Check(m.Cluster(), check.DeepEquals, t.clusters[ci])
+			c.Check(m.Members(), check.DeepEquals, t.clusters[ci])
 		}
 		c.Check(int(km.Total()), check.Equals, t.total)
 		c.Check(km.Within(), check.DeepEquals, t.within)
