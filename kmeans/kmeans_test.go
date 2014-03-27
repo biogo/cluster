@@ -5,7 +5,7 @@
 package kmeans_test
 
 import (
-	"code.google.com/p/biogo.cluster"
+	"code.google.com/p/biogo.cluster/cluster"
 	"code.google.com/p/biogo.cluster/kmeans"
 	check "launchpad.net/gocheck"
 	"math/rand"
