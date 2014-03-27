@@ -91,13 +91,14 @@ func convert(data cluster.Interface) []value {
 
 // Cluster runs a clustering of the data using the mean shift algorithm.
 func (ms *MeanShift) Cluster() error {
+	var err error
 	for i := 0; ; i++ {
 		delta := ms.k.Shift()
 		if delta <= ms.tol {
 			break
 		}
 		if i > ms.maxIter {
-			return fmt.Errorf("meanshift: exceeded maximum iterations: delta=%f", delta)
+			err = fmt.Errorf("meanshift: exceeded maximum iterations: delta=%f", delta)
 		}
 	}
 
@@ -113,7 +114,7 @@ func (ms *MeanShift) Cluster() error {
 		}
 	}
 
-	return nil
+	return err
 }
 
 // Total calculates the total sum of squares for the data relative to the data mean.
