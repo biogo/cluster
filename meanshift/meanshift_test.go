@@ -8,7 +8,7 @@ import (
 	"code.google.com/p/biogo.cluster/cluster"
 	"code.google.com/p/biogo.cluster/meanshift"
 
-	check "launchpad.net/gocheck"
+	"gopkg.in/check.v1"
 	"math/rand"
 	"strings"
 	"testing"
