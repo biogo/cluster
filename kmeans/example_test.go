@@ -5,9 +5,10 @@
 package kmeans_test
 
 import (
-	"code.google.com/p/biogo.cluster/kmeans"
 	"fmt"
 	"strings"
+
+	"github.com/biogo/cluster/kmeans"
 )
 
 type Feature struct {

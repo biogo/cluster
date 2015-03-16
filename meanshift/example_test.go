@@ -5,7 +5,7 @@
 package meanshift_test
 
 import (
-	"code.google.com/p/biogo.cluster/meanshift"
+	"github.com/biogo/cluster/meanshift"
 
 	"fmt"
 	"strings"

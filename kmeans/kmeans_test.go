@@ -5,12 +5,14 @@
 package kmeans_test
 
 import (
-	"code.google.com/p/biogo.cluster/cluster"
-	"code.google.com/p/biogo.cluster/kmeans"
-	"gopkg.in/check.v1"
 	"math/rand"
 	"strings"
 	"testing"
+
+	"github.com/biogo/cluster/cluster"
+	"github.com/biogo/cluster/kmeans"
+
+	"gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) { check.TestingT(t) }

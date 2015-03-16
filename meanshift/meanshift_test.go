@@ -5,13 +5,14 @@
 package meanshift_test
 
 import (
-	"code.google.com/p/biogo.cluster/cluster"
-	"code.google.com/p/biogo.cluster/meanshift"
+	"github.com/biogo/cluster/cluster"
+	"github.com/biogo/cluster/meanshift"
 
-	"gopkg.in/check.v1"
 	"math/rand"
 	"strings"
 	"testing"
+
+	"gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) { check.TestingT(t) }

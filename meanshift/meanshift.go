@@ -6,8 +6,9 @@
 package meanshift
 
 import (
-	"code.google.com/p/biogo.cluster/cluster"
 	"fmt"
+
+	"github.com/biogo/cluster/cluster"
 )
 
 type pnt []float64

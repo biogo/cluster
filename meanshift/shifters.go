@@ -5,8 +5,8 @@
 package meanshift
 
 import (
-	"code.google.com/p/biogo.cluster/cluster"
-	"code.google.com/p/biogo.store/kdtree"
+	"github.com/biogo/cluster/cluster"
+	"github.com/biogo/store/kdtree"
 
 	"math"
 )

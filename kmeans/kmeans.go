@@ -6,7 +6,7 @@
 package kmeans
 
 import (
-	"code.google.com/p/biogo.cluster/cluster"
+	"github.com/biogo/cluster/cluster"
 
 	"errors"
 	"math/rand"
